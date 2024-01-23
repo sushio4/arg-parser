@@ -41,10 +41,10 @@ namespace ArgParser {
     }
 
     template<typename Type, std::size_t Size>
-    void Parser<Type, Size>::show_special(ArgParser::Type type) {
-        if(type == ArgParser::Type::help)
+    void Parser<Type, Size>::show_special(ArgParser::ArgType type) {
+        if(type == ArgParser::ArgType::help)
             show_help(std::cout);
-        else if(type == ArgParser::Type::version)
+        else if(type == ArgParser::ArgType::version)
             show_version();
     }
 
@@ -84,7 +84,7 @@ namespace ArgParser {
             }
 
             auto parse_arg = [&](int index) {
-                using ArgType = ArgParser::Type;
+                using ArgType = ArgParser::ArgType;
 
                 if(_args[index].type == ArgType::extended) {
                     i++;

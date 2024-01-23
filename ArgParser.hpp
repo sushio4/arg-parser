@@ -4,21 +4,43 @@
 #include <cstring>
 #include <ostream>
 
+/**
+ * @brief namespace for argument parser
+*/
 namespace ArgParser {
-    enum class Type : unsigned char {
+    /**
+     * @brief Enum for indicating types of arguments.
+    */
+    enum class ArgType : unsigned char {
+        //for simple flags
         regular,
+        //for options with additional string like "-f filename"
         extended,
+        //for help option
         help,
+        //for version option
         version
     };
 
+    /**
+     * @brief Contains argument declaration
+    */
     struct Argument {
+        //One letter flag, used with single dash, user may combine them like "-tFv"
         char flag = '\0';
+        //Full flag, used with ouble dash like "--version"
         const char* full_flag = nullptr;
-        Type type = Type::regular;
+        //Type of the option
+        ArgType type = ArgType::regular;
+        /**
+         * Create compulsory groups for enforcing arguments.
+         * For each compulsory group, at least one argument in them must be present.
+         * Exceptions are help and version flags, that disable compulsory_group checking.
+         * Hence separate ArgType for them.
+        */
         int compulsory_group = 0;
 
-        constexpr inline Argument(char flag, const char* full_flag, Type type = Type::regular, int compulsory_group = 0) 
+        constexpr inline Argument(char flag, const char* full_flag, ArgType type = ArgType::regular, int compulsory_group = 0) 
         : flag(flag), full_flag(full_flag), type(type), compulsory_group(compulsory_group) {}
 
         constexpr inline Argument(char flag, const char* full_flag, int compulsory_group) 
@@ -41,30 +63,49 @@ namespace ArgParser {
         using type = T;
     };
 
+    /**
+     * Function for making array of Arguments to pass to Parser constructor
+     * 
+     * Example:
+     * ```
+     * using Arg = ArgParser::Argument;
+     * using ArgType = ArgParser::ArgType;
+     *
+     * constexpr auto args = ArgParser::make_args(
+     *     Arg('h', "help", ArgType::help),
+     *     Arg('v', "version", ArgType::version),
+     *     Arg('V', "verbose")
+     * );
+     *
+     * ArgParser::Parser parser(args);
+     * ```
+    */
     template<typename... Ts>
     constexpr auto make_args(const Ts&&... values) {
         using array_type = typename array_type<Ts...>::type;
         return std::array<array_type, sizeof...(Ts)>{values...};
     }
 
+    /**
+     * @brief Main class of the parser namespace. It parses arguments
+    */
     template<typename Type, std::size_t Size>
-    //template<typename Array>
     class Parser {
     public:
         /**
-         * @param args array of ArgParser::Argument structs. You can make it via make_args function 
+         * @param args array of ArgParser::Argument structs. It is recommended to make it using ```make_args``` function
         */
-        constexpr Parser(const std::array<Type, Size>& args, const char* help_msg, const char* version_msg) : 
+        constexpr Parser(const std::array<Type, Size>& args, const char* help_msg = nullptr, const char* version_msg = nullptr) : 
             _args{args}, _values{0}, _comp_groups(0), _help(help_msg), _version(version_msg) {
             //find max comp_group number, help and version args
             for(auto a : _args) {
                 if(a.compulsory_group > _comp_groups) 
                     _comp_groups = a.compulsory_group;
 
-                if(a.type == ArgParser::Type::help)
+                if(a.type == ArgParser::ArgType::help)
                     _help_ref = &a;
         
-                if(a.type == ArgParser::Type::version)
+                if(a.type == ArgParser::ArgType::version)
                     _version_ref = &a;
             }
             _comp_groups++;
@@ -84,7 +125,7 @@ namespace ArgParser {
                 if(!(_args[i] == arg)) 
                     continue;
 
-                if(_args[i].type == ArgParser::Type::extended) 
+                if(_args[i].type == ArgParser::ArgType::extended) 
                     return 0;
 
                 return _values[i].set;
@@ -101,7 +142,7 @@ namespace ArgParser {
                 if(!(_args[i] == arg)) 
                     continue;
 
-                if(_args[i].type != Type::extended) 
+                if(_args[i].type != ArgType::extended) 
                     return nullptr;
 
                 return _values[i].str;
@@ -125,7 +166,7 @@ namespace ArgParser {
         void show_version();
         void print_comp_group(int group);
 
-        void show_special(ArgParser::Type type);
+        void show_special(ArgParser::ArgType type);
 
         union ArgValue{
             int   set = 0;
