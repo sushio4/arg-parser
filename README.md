@@ -71,9 +71,13 @@ constexpr auto args = ArgParser::make_args(
     Arg('b', nullptr, ArgType::regular, 1),
     Arg('c', nullptr, ArgType::regular, 1),
 
-    Arg('d', nullptr, ArgType::regular, 1),
-    Arg('e', nullptr, ArgType::regular, 1)
+    Arg('d', nullptr, ArgType::regular, 2),
+    Arg('e', nullptr, ArgType::regular, 2)
     //...
 );
 ```
-In this case parser will return `false` if the user does not specify at least one of the flags a, b, c and one of the flags d, e.
+In this case parser will return `false` if the user does not specify at least:
+- one of the flags a, b, c
+- one of the flags d, e
+
+As a, b, c are in one group and d, e are in the other
