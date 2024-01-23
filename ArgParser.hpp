@@ -170,6 +170,14 @@ namespace ArgParser {
             return nullptr;
         }
 
+        /**
+         * @brief read unnamed arguments
+         * @return reference to std::vector<char*> of non-flag parameter passed to the program
+        */
+        inline auto unnamed_args() -> const std::vector<char*>& {
+            return _unnamed;
+        }
+
     private:
         /**
          * @brief searches for matching argument
