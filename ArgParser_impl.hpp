@@ -74,7 +74,7 @@ namespace ArgParser {
         /**array for checking compulsory groups
          * since groups start from 1, the 0 value tells whether to ignore the rest 
          */
-        bool comp_satisfied[_comp_groups]{0};
+        std::vector<bool> comp_satisfied(_comp_groups);
 
         for(int i = 1; i < argc; i++) {
             //check for unnamed args
@@ -88,25 +88,34 @@ namespace ArgParser {
 
                 if(_args[index].type == ArgType::extended) {
                     i++;
+                    //not provided
+                    if(argc <= i) {
+                        std::cerr << "Must provide a parameter after -" << _args[index].flag << "|--" <<
+                            _args[index].full_flag << " option.\n\n";
+                        show_help(std::cerr);
+                        return false;
+                    }
                     _values[index].str = argv[i];
-                    return;
+                } 
+                else {
+                    _values[index].set++;
                 }
-
-                _values[index].set++;
                 
                 //special treatment for help/version
-                if(_args[index].type != ArgType::regular) {
+                if(_args[index].type == ArgType::help ||
+                   _args[index].type == ArgType::version) {
                     comp_satisfied[0] = true;
                     
                     show_special(_args[index].type);
 
-                    return;
+                    return true;
                 }
 
                 //compulsory group check
                 if(_args[index].compulsory_group != 0) {
                     comp_satisfied[_args[index].compulsory_group] = true;
                 }
+                return true;
             };
 
             //check for long
@@ -114,7 +123,8 @@ namespace ArgParser {
                 int index = search_args(argv[i] + 2);
                 if(index == -1) return false;
                 
-                parse_arg(index);
+                if(!parse_arg(index))
+                    return false;
                 continue;
             } 
 
@@ -123,7 +133,8 @@ namespace ArgParser {
                 int index = search_args(*p);
                 if(index == -1) return false;
 
-                parse_arg(index);
+                if(!parse_arg(index))
+                    return false;
             }
         }
 
